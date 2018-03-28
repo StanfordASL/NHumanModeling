@@ -4,7 +4,8 @@ import sys
 
 if len(sys.argv) < 2:
     print('Usage: source activate tensorflow_p27; python plot_validation_curves.py <model checkpoint>')
-    
+    quit()
+
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
@@ -41,20 +42,11 @@ robot_node = str(robot_stg_node)
 
 tf.reset_default_graph()
 
-data_dir = "data/2016.NBA.Raw.SportVU.Game.Logs"
-all_files = glob(os.path.join(data_dir, '*at_ATL*.json'))[:NUM_DATAFILES]
-train_files, eval_files, test_files = split_files(all_files, train_eval_test_split=[.8, .2, .0], seed=123)
-
 positions_map_path = "data/positions_map.pkl"
 pos_dict_path = "data/pos_dict_eval_%d_files_%s_rows.pkl" % (NUM_DATAFILES, str(ROWS_TO_EXTRACT))
 
-if os.path.isfile(pos_dict_path):
-    with open(pos_dict_path, 'rb') as f:
-        pos_dict = pickle.load(f)
-else:
-    pos_dict = get_pos_dict(eval_files, positions_map_path=positions_map_path)
-    with open(pos_dict_path, 'wb') as f:
-        pickle.dump(pos_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+with open(pos_dict_path, 'rb') as f:
+    pos_dict = pickle.load(f)
 
 STG = SpatioTemporalGraphCVAE(pos_dict, robot_stg_node,
                               edge_radius=EDGE_RADIUS,
@@ -62,14 +54,12 @@ STG = SpatioTemporalGraphCVAE(pos_dict, robot_stg_node,
                               edge_influence_combine_method=EDGE_INFLUENCE_COMBINE_METHOD)
 
 train_data_dict_path = "data/train_data_dict_%d_files_%s_rows.pkl" % (NUM_DATAFILES, str(ROWS_TO_EXTRACT))
-if os.path.isfile(train_data_dict_path):
-    with open(train_data_dict_path, 'rb') as f:
-        train_data_dict = pickle.load(f)
+with open(train_data_dict_path, 'rb') as f:
+    train_data_dict = pickle.load(f)
 
 eval_data_dict_path = "data/eval_data_dict_%d_files_%s_rows.pkl" % (NUM_DATAFILES, str(ROWS_TO_EXTRACT))
-if os.path.isfile(eval_data_dict_path):
-    with open(eval_data_dict_path, 'rb') as f:
-        eval_data_dict = pickle.load(f)
+with open(eval_data_dict_path, 'rb') as f:
+    eval_data_dict = pickle.load(f)
 
 hps.add_hparam("nodes_standardization", eval_data_dict["nodes_standardization"])
 hps.add_hparam("extras_standardization", {"mean": eval_data_dict["extras_mean"],

@@ -19,7 +19,7 @@ from st_graph import hps
 from stg_node import STGNode
 from experiment_details import get_output_base
 
-robot_stg_node = STGNode('Mason Plumlee', 'HomeC')
+robot_stg_node = STGNode('Al Horford', 'HomeC')
 robot_node = str(robot_stg_node)
 
 from glob import glob
@@ -31,6 +31,7 @@ tf.reset_default_graph()
 
 if len(sys.argv) < 7:
     print('Usage: source activate tensorflow_p27; python get_single_scalability_info.py <NUM_DATAFILES> <ROWS_TO_EXTRACT> <EDGE_RADIUS> <EDGE_SCM> <EDGE_ICM> <ROWS_TO_USE>')
+    quit()
 
 NUM_DATAFILES = int(sys.argv[1])
 ROWS_TO_EXTRACT = sys.argv[2]
@@ -39,21 +40,11 @@ EDGE_SCM = sys.argv[4]
 EDGE_ICM = sys.argv[5]
 ROWS_TO_USE = sys.argv[6]
 
-data_dir = "data/2016.NBA.Raw.SportVU.Game.Logs"
-all_files = glob(os.path.join(data_dir, '*.json'))[:NUM_DATAFILES]
-print(all_files)
-train_files, eval_files, test_files = split_files(all_files, train_eval_test_split=[.8, .2, .0], seed=123)
-print(train_files, eval_files)
 positions_map_path = "data/positions_map.pkl"
 pos_dict_path = "data/pos_dict_%d_files_%s_rows.pkl" % (NUM_DATAFILES, str(ROWS_TO_EXTRACT))
 
-if os.path.isfile(pos_dict_path):
-    with open(pos_dict_path, 'rb') as f:
-        pos_dict = pickle.load(f)
-else:
-    pos_dict = get_pos_dict(train_files, positions_map_path=positions_map_path)
-    with open(pos_dict_path, 'wb') as f:
-        pickle.dump(pos_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+with open(pos_dict_path, 'rb') as f:
+    pos_dict = pickle.load(f)
 
 STG = SpatioTemporalGraphCVAE(pos_dict, robot_stg_node,
                               edge_radius=EDGE_RADIUS,
@@ -61,13 +52,8 @@ STG = SpatioTemporalGraphCVAE(pos_dict, robot_stg_node,
                               edge_influence_combine_method=EDGE_ICM)
 
 train_data_dict_path = "data/train_data_dict_%d_files_%s_rows.pkl" % (NUM_DATAFILES, str(ROWS_TO_EXTRACT))
-if os.path.isfile(train_data_dict_path):
-    with open(train_data_dict_path, 'rb') as f:
-        train_data_dict = pickle.load(f)
-else:
-    train_data_dict = get_data_dict(train_files, positions_map_path=positions_map_path)
-    with open(train_data_dict_path, 'wb') as f:
-        pickle.dump(train_data_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+with open(train_data_dict_path, 'rb') as f:
+    train_data_dict = pickle.load(f)
 
 if ROWS_TO_USE != "all":
     ROWS_TO_USE = int(ROWS_TO_USE)
