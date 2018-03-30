@@ -40,7 +40,7 @@ sys.path.append("../../code")
 sys.path.append("..")
 from utils.bags import *
 from utils.learning import *
-from traffic_weaving_models import *
+from multimodal_generative_model import *
 from st_graph import *
 from data_utils import *
 from stg_node import *
@@ -102,21 +102,12 @@ class Runner(object):
 
 
     def load_data_and_define_model(self):
-        data_dir = os.path.join(config['data_dir'], "2016.NBA.Raw.SportVU.Game.Logs")
-        all_files = glob(os.path.join(data_dir, '*.json'))[:NUM_DATAFILES]
-        train_files, eval_files, test_files = split_files(all_files, train_eval_test_split=[.8, .2, .0], seed=123)
-
         self.robot_node = robot_node = STGNode('Al Horford', 'HomeC')
         positions_map_path = os.path.join(config['data_dir'], "positions_map.pkl")
         pos_dict_path = os.path.join(config['data_dir'], "pos_dict_%d_files_%s_rows.pkl" % (NUM_DATAFILES, str(ROWS_TO_EXTRACT)))
 
-        if os.path.isfile(pos_dict_path):
-            with open(pos_dict_path, 'rb') as f:
-                pos_dict = pickle.load(f)
-        else:
-            pos_dict = get_pos_dict(train_files, positions_map_path=positions_map_path)
-            with open(pos_dict_path, 'wb') as f:
-                pickle.dump(pos_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(pos_dict_path, 'rb') as f:
+            pos_dict = pickle.load(f)
 
         STG = SpatioTemporalGraphCVAE(pos_dict, robot_node, 
                                       edge_radius=EDGE_RADIUS,
@@ -124,14 +115,8 @@ class Runner(object):
                                       edge_influence_combine_method=EDGE_INFLUENCE_COMBINE_METHOD)
 
         train_data_dict_path = os.path.join(config['data_dir'], "train_data_dict_%d_files_%s_rows.pkl" % (NUM_DATAFILES, str(ROWS_TO_EXTRACT)))
-        if os.path.isfile(train_data_dict_path):
-            with open(train_data_dict_path, 'rb') as f:
-                train_data_dict = pickle.load(f)
-        else:
-            train_data_dict = get_data_dict(train_files, positions_map_path=positions_map_path)
-            with open(train_data_dict_path, 'wb') as f:
-                pickle.dump(train_data_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
-        # save_as_npz_and_hdf5(base_filename + "_train", train_data_dict["input_dict"])
+        with open(train_data_dict_path, 'rb') as f:
+            train_data_dict = pickle.load(f)
 
         hps.add_hparam("nodes_standardization", train_data_dict["nodes_standardization"])
         hps.add_hparam("extras_standardization", {"mean": train_data_dict["extras_mean"],
@@ -140,15 +125,9 @@ class Runner(object):
         hps.add_hparam("pred_indices", train_data_dict["pred_indices"])
 
         eval_data_dict_path = os.path.join(config['data_dir'], "eval_data_dict_%d_files_%s_rows.pkl" % (NUM_DATAFILES, str(ROWS_TO_EXTRACT)))
-        if os.path.isfile(eval_data_dict_path):
-            with open(eval_data_dict_path, 'rb') as f:
-                eval_data_dict = pickle.load(f)
-        else:
-            eval_data_dict = get_data_dict(eval_files, positions_map_path=positions_map_path)
-            with open(eval_data_dict_path, 'wb') as f:
-                pickle.dump(eval_data_dict, f, protocol=pickle.HIGHEST_PROTOCOL)
-        # save_as_npz_and_hdf5(base_filename + "_eval", eval_data_dict["input_dict"])
-
+        with open(eval_data_dict_path, 'rb') as f:
+            eval_data_dict = pickle.load(f)
+        
         train_input_function = tf.estimator.inputs.numpy_input_fn(train_data_dict["input_dict"],
                                                                   y = train_data_dict["labels"],
                                                                   batch_size = hps.batch_size,
@@ -202,8 +181,6 @@ class Runner(object):
 #     @profile
     def train_and_evaluate(self):
         logging.info('[train_and_evaluate] Started!')
-#         self.experiment.continuous_train_and_eval()
-#         self.experiment.train_and_evaluate()
         self.experiment.train()
         logging.info('[train_and_evaluate] Done!')
             
@@ -245,12 +222,6 @@ class Runner(object):
             for node in nodes:
                 input_dict[str(node)] = tf.placeholder(tf.float32, shape=[1, None, state_dim], name=str(node))
                 
-#             input_dict[str(self.robot_node) + "_future_x"] = tf.placeholder(tf.float32, 
-#                                                                             shape=[None, ph, state_dim/2], 
-#                                                                             name=str(self.robot_node) + "_future_x")
-#             input_dict[str(self.robot_node) + "_future_y"] = tf.placeholder(tf.float32, 
-#                                                                             shape=[None, ph, state_dim/2], 
-#                                                                             name=str(self.robot_node) + "_future_y")
             input_dict[str(self.robot_node) + "_future"]   = tf.placeholder(tf.float32, 
                                                                             shape=[None, ph, state_dim], 
                                                                             name=str(self.robot_node) + "_future")
