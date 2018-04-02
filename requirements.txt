@@ -1,0 +1,13 @@
+numpy
+matplotlib
+pandas
+scipy
+sympy
+h5py
+jupyter
+ipykernel
+tensorflow==1.5.0
+imageio==2.2.0
+
+# Uncomment the line below if you want to be able to profile memory usage.
+# memory-profiler==0.52.0
