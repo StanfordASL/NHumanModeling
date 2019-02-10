@@ -1,3 +1,5 @@
+**UPDATE**: There is a newer and much faster version of this codebase implemented in PyTorch! Take a look **[here](https://github.com/StanfordASL/DynSTGModeling)**!
+
 # N-Human Modeling
 
 This repository contains the code for [Generative Modeling of Multimodal Multi-Human Behavior](https://arxiv.org/abs/1803.02015) by Boris Ivanovic, Edward Schmerling, Karen Leung, and Marco Pavone.
